@@ -1,6 +1,8 @@
 package com.nasnav.controller;
 
 import com.nasnav.ErrorMessage;
+import com.nasnav.model.ColumnEnum;
+import com.nasnav.model.Response;
 import com.nasnav.utils.BaseTest;
 import org.junit.Test;
 import org.springframework.http.MediaType;
@@ -14,8 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,6 +25,8 @@ public class DataProcessingControllerTest extends BaseTest {
     private final String UPLOAD_PATH = "/dataprocess/loadxls";
 
     private final String DOWNLOAD_PATH = "/dataprocess/getcsv";
+
+    private final String ASSIGN_PATH = "/dataprocess/%s/assign";
 
     private final String RESOURCES_PATH = "src/test/resources/";
 
@@ -106,5 +109,52 @@ public class DataProcessingControllerTest extends BaseTest {
                 .getResponse();
         assertNotNull(response);
         assertEquals(String.format(ErrorMessage.KEY_NOT_FOUND_IN_MAP, uuid), response.getErrorMessage());
+    }
+
+    @Test
+    public void testAssignColumn_success() throws Exception {
+        //-------------UPLOAD FILE-------------
+        String xlsxFile = "dataprocess.xlsx";
+        MockMultipartFile multipartFile = new MockMultipartFile("file", xlsxFile,
+                MediaType.MULTIPART_FORM_DATA_VALUE, Files.readAllBytes(Paths.get(RESOURCES_PATH + xlsxFile)));
+        final String uuid = uploadFile(multipartFile, UPLOAD_PATH);
+
+        String expectedUUID = UUID.nameUUIDFromBytes(xlsxFile.getBytes()).toString();
+
+        assertNotNull(uuid);
+        assertEquals(expectedUUID, uuid);
+
+        //------------DOWNLOAD FILE------------
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("column_name", ColumnEnum.RTP.name());
+        params.add("column_index", "1");
+        final Response response = getForObject(String.format(ASSIGN_PATH, uuid), params, Response.class);
+
+        assertNotNull(response);
+        assertTrue(response.isSaved());
+    }
+
+    @Test
+    public void testAssignColumn_failure() throws Exception {
+        //-------------UPLOAD FILE-------------
+        String xlsxFile = "dataprocess.xlsx";
+        MockMultipartFile multipartFile = new MockMultipartFile("file", xlsxFile,
+                MediaType.MULTIPART_FORM_DATA_VALUE, Files.readAllBytes(Paths.get(RESOURCES_PATH + xlsxFile)));
+        final String uuid = uploadFile(multipartFile, UPLOAD_PATH);
+
+        String expectedUUID = UUID.nameUUIDFromBytes(xlsxFile.getBytes()).toString();
+
+        assertNotNull(uuid);
+        assertEquals(expectedUUID, uuid);
+
+        //------------DOWNLOAD FILE------------
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("column_name", "Unknown");
+        params.add("column_index", "1");
+        final Response response = getForObject(String.format(ASSIGN_PATH, uuid), params, Response.class);
+
+        assertNotNull(response);
+        assertFalse(response.isSaved());
+        assertEquals(String.format(ErrorMessage.INVALID_VALUE_ENUM, "Unknown"), response.getErrorMessage());
     }
 }
