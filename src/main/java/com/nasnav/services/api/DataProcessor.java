@@ -1,5 +1,6 @@
 package com.nasnav.services.api;
 
+import com.nasnav.model.Response;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -10,5 +11,5 @@ public interface DataProcessor {
 
     File returnCsv(String uuid);
 
-    File assignColumn(String uuid, String name, Integer index);
+    Response assignColumn(String uuid, String name, Integer index);
 }

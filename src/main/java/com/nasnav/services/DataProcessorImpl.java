@@ -4,6 +4,7 @@ import com.nasnav.ErrorMessage;
 import com.nasnav.InMemory;
 import com.nasnav.model.ColumnEnum;
 import com.nasnav.model.DataInfo;
+import com.nasnav.model.Response;
 import com.nasnav.services.api.DataProcessor;
 import com.nasnav.services.api.ExcelParser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,17 +63,20 @@ public class DataProcessorImpl implements DataProcessor {
     }
 
     @Override
-    public File assignColumn(String uuid, String name, Integer index) {
+    public Response assignColumn(String uuid, String name, Integer index) {
         if (!InMemory.getDataProcess().containsKey(uuid)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(ErrorMessage.KEY_NOT_FOUND_IN_MAP, uuid));
         }
 
+        Response response = new Response();
         final DataInfo dataInfo = InMemory.getDataProcess().get(uuid);
         ColumnEnum columnEnum;
         try {
             columnEnum = ColumnEnum.valueOf(name);
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(ErrorMessage.INVALID_VALUE_ENUM, name));
+            response.setSaved(false);
+            response.setErrorMessage(String.format(ErrorMessage.INVALID_VALUE_ENUM, name));
+            return response;
         }
         if (dataInfo.isHasHeader()) {
             dataInfo.getData().get(0)[index-1] = columnEnum.name();
@@ -83,8 +87,9 @@ public class DataProcessorImpl implements DataProcessor {
             dataInfo.getData().add(0, header);
             dataInfo.setHasHeader(true);
         }
+        response.setSaved(true);
 
-        return generateCsvFromList(uuid);
+        return response;
     }
 
     private File generateCsvFromList(String uuid) {

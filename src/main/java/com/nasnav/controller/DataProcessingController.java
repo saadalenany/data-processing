@@ -1,5 +1,6 @@
 package com.nasnav.controller;
 
+import com.nasnav.model.Response;
 import com.nasnav.services.api.DataProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -51,23 +52,9 @@ public class DataProcessingController {
     }
 
     @GetMapping("/{uuid}/assign")
-    public ResponseEntity<Resource> assignColumn(@PathVariable("uuid") String uuid,
+    public ResponseEntity<Response> assignColumn(@PathVariable("uuid") String uuid,
                                                  @RequestParam("column_name") String name,
                                                  @RequestParam("column_index") Integer index) {
-        final File file = dataProcessor.assignColumn(uuid, name, index);
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
-
-        try {
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .contentLength(file.length())
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(resource);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return ResponseEntity.ok(dataProcessor.assignColumn(uuid, name, index));
     }
 }

@@ -12,5 +12,5 @@ public class ErrorMessage {
 
     public static final String ERROR_GENERATING_WRITING_DOWNLOADING = "Error while generating, writing into or downloading the CSV file.";
 
-    public static final String INVALID_VALUE_ENUM = "Invalid value for enum [%s]";
+    public static final String INVALID_VALUE_ENUM = "Invalid column name for enum value [%s]";
 }
